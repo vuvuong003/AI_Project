@@ -3,7 +3,7 @@ dijkstra_search.py — Dijkstra Pathfinding on the Wildfire Grid
 ===============================================================
 Uses the EXACT same GridWorld state space as scenario.py / fire_environment.py.
 
-Key differences from A* in fire_environment.py:
+Key differences from A*:
   - NO heuristic             → explores outward in all directions uniformly
   - NO fire proximity penalty → edge cost is always 1.0 (pure hop count / distance)
   - Fire cells are still IMPASSABLE (treated as walls at query time)
@@ -12,8 +12,6 @@ Key differences from A* in fire_environment.py:
 The edge cost here is simply:
   1.0   if the destination is ROAD or EXIT
   inf   if the destination is FIRE or BLOCKED
-
-Run this file directly to compare Dijkstra vs A* on the custom scenario.
 """
 
 import heapq
@@ -59,7 +57,7 @@ def dijkstra_search(world):
     path : list of (row, col) or None
         Ordered list of cells from start to goal, or None if unreachable.
     nodes_expanded : int
-        Number of nodes popped from the priority queue (for comparison with A*).
+        Number of nodes popped from the priority queue.
     total_cost : float
         Total path cost (equal to path length since all edges cost 1.0).
     """
@@ -70,8 +68,8 @@ def dijkstra_search(world):
     open_list = []
     heapq.heappush(open_list, (0.0, start))
 
-    came_from   = {}              # node → predecessor
-    dist        = {start: 0.0}   # best known cost to each node
+    came_from      = {}              # node → predecessor
+    dist           = {start: 0.0}   # best known cost to each node
     nodes_expanded = 0
 
     while open_list:
@@ -97,7 +95,7 @@ def dijkstra_search(world):
 
             new_cost = cost + step_cost
             if new_cost < dist.get(neighbor, float('inf')):
-                dist[neighbor]    = new_cost
+                dist[neighbor]      = new_cost
                 came_from[neighbor] = current
                 heapq.heappush(open_list, (new_cost, neighbor))
 
@@ -116,61 +114,26 @@ def _reconstruct_path(came_from, current):
     return path
 
 
-# ── Main: run and compare with A* ─────────────────────────────────────────────
+# ── Main: run Dijkstra standalone ─────────────────────────────────────────────
 
 if __name__ == "__main__":
-    from fire_environment import a_star_search
-
-    world_dijkstra = make_custom_scenario()
-    world_astar    = make_custom_scenario()   # same layout, separate instance
+    world = make_custom_scenario()
 
     print("=" * 55)
-    print("  Wildfire Evacuation — Algorithm Comparison")
+    print("  Wildfire Evacuation — Dijkstra Search")
     print("=" * 55)
-    print(f"  Grid       : {world_dijkstra.rows}x{world_dijkstra.cols}")
-    print(f"  Agent at   : {world_dijkstra.agent_pos}")
-    print(f"  Exits at   : {world_dijkstra.exit_cells}")
-    print(f"  Fire cells : {sorted(world_dijkstra.fire_cells)}")
+    print(f"  Grid       : {world.rows}x{world.cols}")
+    print(f"  Agent at   : {world.agent_pos}")
+    print(f"  Exits at   : {world.exit_cells}")
+    print(f"  Fire cells : {sorted(world.fire_cells)}")
     print("=" * 55)
 
-    # ── Run Dijkstra ──────────────────────────────────────────────────────────
-    d_path, d_nodes, d_cost = dijkstra_search(world_dijkstra)
+    path, nodes_expanded, total_cost = dijkstra_search(world)
 
-    print("\n[Dijkstra — distance only, no fire penalty]")
-    if d_path:
-        print(f"  Path length    : {len(d_path)} cells")
-        print(f"  Total cost     : {d_cost}")
-        print(f"  Nodes expanded : {d_nodes}")
+    if path:
+        print(f"\n  Path length    : {len(path)} cells")
+        print(f"  Total cost     : {total_cost}")
+        print(f"  Nodes expanded : {nodes_expanded}")
+        world.render(path=path, title="Dijkstra — Shortest Distance Path (no fire penalty)")
     else:
-        print("  No path found.")
-
-    # ── Run A* ────────────────────────────────────────────────────────────────
-    a_path, a_nodes = a_star_search(world_astar)
-
-    print("\n[A* — distance + fire proximity penalty + heuristic]")
-    if a_path:
-        # Compute actual A* cost using the fire-aware edge cost
-        a_cost = sum(
-            world_astar.edge_cost(a_path[i], a_path[i + 1])
-            for i in range(len(a_path) - 1)
-        )
-        print(f"  Path length    : {len(a_path)} cells")
-        print(f"  Total cost     : {a_cost:.2f}")
-        print(f"  Nodes expanded : {a_nodes}")
-    else:
-        print("  No path found.")
-
-    print("\n" + "=" * 55)
-
-    # ── Render both paths ─────────────────────────────────────────────────────
-    if d_path:
-        world_dijkstra.render(
-            path=d_path,
-            title="Dijkstra — Shortest Distance Path (no fire penalty)"
-        )
-
-    if a_path:
-        world_astar.render(
-            path=a_path,
-            title="A* — Fire-Aware Least-Cost Path"
-        )
+        print("\n  No path found.")
