@@ -6,14 +6,35 @@ from collections import defaultdict
 def d_star_lite_search(world, start=None, goal=None):
     if start is None:
         start = world.agent_pos
+
     if goal is None:
         if not world.exit_cells:
             return None, 0
-        goal = min(world.exit_cells,
-                   key=lambda e: abs(start[0]-e[0]) + abs(start[1]-e[1]))
+        goals = list(world.exit_cells)
+    else:
+        goals = [goal]
 
+    best_path = None
+    best_cost = math.inf
+    total_nodes_expanded = 0
+
+    for current_goal in goals:
+        path, nodes = _d_star_lite_search_for_goal(world, start, current_goal)
+        total_nodes_expanded += nodes
+        if path is None:
+            continue
+
+        cost = sum(world.edge_cost(path[i], path[i + 1])
+                   for i in range(len(path) - 1))
+        if cost < best_cost:
+            best_cost = cost
+            best_path = path
+
+    return best_path, total_nodes_expanded
+
+def _d_star_lite_search_for_goal(world, start, goal):
     def heuristic(a, b):
-        return abs(a[0]-b[0]) + abs(a[1]-b[1])
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
     def calculate_key(u):
         return (min(g[u], rhs[u]) + heuristic(start, u) + km,

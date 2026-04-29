@@ -21,7 +21,7 @@ def make_custom_scenario():
     Build the exact map from the hand-drawn design.
     Grid is 20 columns x 20 rows (0-indexed).
     """
-    world = GridWorld(rows=20, cols=20, fire_spread_prob=0.3)
+    world = GridWorld(rows=20, cols=20, fire_spread_prob=0.1)
 
     # ── WALLS (W) ─────────────────────────────────────────────────────────────
     # Read row by row from the image (row 0 = top)
@@ -78,7 +78,7 @@ def make_custom_scenario():
         (15,0),(15,10),(15,19),
 
         # Row 16 — long horizontal wall
-        (16,0),(16,3),(16,4),(16,5),(16,6),(16,7),(16,8),(16,9),(16,10),
+        (16,0),(16,3),(16,4),(16,7),(16,8),(16,9),(16,10),
         (16,11),(16,12),(16,13),(16,14),(16,15),(16,16),(16,17),(16,18),(16,19),
 
         # Row 17
@@ -99,11 +99,8 @@ def make_custom_scenario():
     # ── FIRE 🔥 ───────────────────────────────────────────────────────────────
     fires = [
         (2, 17),    # row 2, right area
-        (5, 2),(5, 3),   # row 5, left cluster
-        (6, 2),(6, 3),   # row 6, left cluster
-        (10, 5),(10, 6), # row 10, mid-left cluster
-        (11, 12),(11, 13), # row 11, mid-right cluster
-        (14, 7),    # row 14, center
+        (8, 9),     # row 8, mid-right cluster
+        (13, 1),    # row 13, left area
     ]
 
     for (r, c) in fires:

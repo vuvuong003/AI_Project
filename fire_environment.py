@@ -42,7 +42,7 @@ class GridWorld:
     fire_spread_prob : float   Probability that fire spreads to a neighbor each timestep
     """
 
-    def __init__(self, rows=20, cols=20, fire_spread_prob=0.3):
+    def __init__(self, rows=20, cols=20, fire_spread_prob=0.1):
         self.rows = rows
         self.cols = cols
         self.fire_spread_prob = fire_spread_prob
@@ -174,7 +174,9 @@ class GridWorld:
 
     # ── Visualization ──────────────────────────────────────────────────────────
 
-    def render(self, path=None, title=None):
+    # ...existing code...
+
+    def render(self, path=None, title=None, show=True, ax=None):
         """
         Draw the current grid state.
 
@@ -182,8 +184,15 @@ class GridWorld:
         ----------
         path : list of (row, col), optional   Highlight a planned path in blue
         title : str, optional                 Plot title
+        ax : matplotlib.axes.Axes, optional   Reuse existing axes for animation
         """
-        fig, ax = plt.subplots(figsize=(8, 8))
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(8, 8))
+            created_fig = True
+        else:
+            fig = ax.figure
+            ax.clear()
+            created_fig = False
 
         # Build RGB image from grid
         img = np.zeros((self.rows, self.cols, 3))
@@ -239,8 +248,81 @@ class GridWorld:
         ax.set_facecolor('#1A1A1A')
 
         plt.tight_layout()
-        plt.show()
-        return fig
+        if show and created_fig:
+            plt.show(block=False)
+        return fig, ax
+
+    def simulate_path(self, path, search_fn=None, delay=0.4, algorithm_name="Unknown"):
+        """
+        Simulate the agent following a planned path through the world.
+        If search_fn is provided, replan after each fire spread.
+        
+        Parameters
+        ----------
+        path : list of (row, col)
+            The initial path to follow
+        search_fn : callable, optional
+            Search function to call for replanning after fire spread
+        delay : float
+            Pause duration between steps in seconds
+        algorithm_name : str
+            Name of the algorithm to display in the title
+        """
+        if not path:
+            return
+
+        if self.agent_pos != path[0]:
+            raise ValueError("Path must start at the agent's current position.")
+
+        plt.ion()
+        fig, ax = self.render(path=path, title=f"{algorithm_name} Simulation — Start", show=False)
+        fig.show()
+        fig.canvas.draw()
+        plt.pause(delay)
+
+        remaining_path = list(path)
+        step = 0
+
+        while len(remaining_path) > 1:
+            step += 1
+            next_pos = remaining_path[1]
+            print(f"Step {step}: {self.agent_pos} -> {next_pos}")
+            self.move_agent(next_pos)
+
+            if self.agent_is_safe():
+                print("Agent reached exit.")
+                self.render(path=remaining_path[1:], title=f"{algorithm_name} Simulation — Step {step} (SUCCESS)", show=False, ax=ax)
+                fig.canvas.draw()
+                plt.pause(delay)
+                break
+
+            newly_ignited = self.spread_fire()
+            if newly_ignited:
+                print(f"Fire spread to {sorted(newly_ignited)}")
+
+            if search_fn is not None:
+                result = search_fn(self)
+                new_path = result[0] if isinstance(result, tuple) else result
+                if new_path is None:
+                    print("No valid path remains.")
+                    self.render(path=None, title=f"{algorithm_name} Simulation — Step {step} (FAILED)", show=False, ax=ax)
+                    fig.canvas.draw()
+                    break
+                if new_path[0] != self.agent_pos:
+                    raise ValueError("Replanned path must start at the current agent position.")
+                remaining_path = list(new_path)
+            else:
+                remaining_path = remaining_path[1:]
+
+            self.render(path=remaining_path, title=f"{algorithm_name} Simulation — Step {step}", show=False, ax=ax)
+            fig.canvas.draw()
+            plt.pause(delay)
+
+            if self.agent_is_dead():
+                print("Agent died in the fire.")
+                break
+
+        plt.ioff()
 
     # ── Private helpers ────────────────────────────────────────────────────────
 
@@ -281,10 +363,16 @@ if __name__ == "__main__":
     print(f"Heuristic from agent: {world.heuristic(world.agent_pos)}")
 
     path_a_star, nodes_a_star = a_star_search(world)
-    paths_d_star, nodes_d_star = d_star_lite_search(world)
+    path_d_star, nodes_d_star = d_star_lite_search(world)
     
     print(f"A* Search --> path length: {len(path_a_star) if path_a_star else 'None'}, nodes expanded: {nodes_a_star}")
-    print(f"D* Lite Search --> path length: {len(paths_d_star) if paths_d_star else 'None'}, nodes expanded: {nodes_d_star}")
+    print(f"D* Lite Search --> path length: {len(path_d_star) if path_d_star else 'None'}, nodes expanded: {nodes_d_star}")
 
-    world.render(path=path_a_star, title="A* Plan")
-    world.render(path=paths_d_star, title="D* Lite Plan")
+    world_a = make_custom_scenario()
+    world_a.render(path=path_a_star, title="A* Plan")
+    world_a.simulate_path(path_a_star, search_fn=a_star_search, delay=0.4, algorithm_name="A*")
+
+    world_d = make_custom_scenario()
+    world_d.render(path=path_d_star, title="D* Lite Plan")
+    world_d.simulate_path(path_d_star, search_fn=d_star_lite_search, delay=0.4, algorithm_name="D* Lite")
+
