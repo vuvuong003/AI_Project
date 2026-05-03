@@ -100,6 +100,7 @@ def make_custom_scenario():
     fires = [
         (2, 17),    # row 2, right area
         (8, 9),     # row 8, mid-right cluster
+        (7, 12),
         (13, 1),    # row 13, left area
     ]
 

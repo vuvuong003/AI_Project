@@ -353,6 +353,7 @@ if __name__ == "__main__":
     from scenario import make_custom_scenario
     from search_algorithms.a_star import a_star_search
     from search_algorithms.dstar_lite import d_star_lite_search
+    from search_algorithms.fire_evacuation_dijkstra import dijkstra_search
 
     world = make_custom_scenario()
     print(f"Grid size:  {world.rows}x{world.cols}")
@@ -364,9 +365,15 @@ if __name__ == "__main__":
 
     path_a_star, nodes_a_star = a_star_search(world)
     path_d_star, nodes_d_star = d_star_lite_search(world)
+    path_dijkstra, nodes_dijkstra, cost_dijkstra = dijkstra_search(world)
     
+    print(f"Greedy Search (Dijkstra) --> path length: {len(path_dijkstra) if path_dijkstra else 'None'}, nodes expanded: {nodes_dijkstra}, total cost: {cost_dijkstra}")
     print(f"A* Search --> path length: {len(path_a_star) if path_a_star else 'None'}, nodes expanded: {nodes_a_star}")
     print(f"D* Lite Search --> path length: {len(path_d_star) if path_d_star else 'None'}, nodes expanded: {nodes_d_star}")
+
+    world_k = make_custom_scenario()
+    world_k.render(path=path_dijkstra, title="Dijkstra Plan")
+    world_k.simulate_path(path_dijkstra, search_fn=dijkstra_search, delay=0.4, algorithm_name="Dijkstra")
 
     world_a = make_custom_scenario()
     world_a.render(path=path_a_star, title="A* Plan")
