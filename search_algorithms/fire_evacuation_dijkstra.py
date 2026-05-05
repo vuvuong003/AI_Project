@@ -15,12 +15,7 @@ The edge cost here is simply:
 """
 
 import heapq
-import sys
-import os
-sys.path.insert(0, os.path.dirname(__file__))
-
-from fire_environment import GridWorld, ROAD, FIRE, EXIT, BLOCKED
-from scenario import make_custom_scenario
+from fire_environment import GridWorld, FIRE, BLOCKED
 
 
 # ── Pure distance edge cost (no fire penalty) ──────────────────────────────────
@@ -50,7 +45,7 @@ def dijkstra_search(world):
     Parameters
     ----------
     world : GridWorld
-        The environment built by make_custom_scenario() — state space is unchanged.
+        The environment to search, typically built from the wildfire grid builder.
 
     Returns
     -------
@@ -112,28 +107,3 @@ def _reconstruct_path(came_from, current):
         path.append(current)
     path.reverse()
     return path
-
-
-# ── Main: run Dijkstra standalone ─────────────────────────────────────────────
-
-if __name__ == "__main__":
-    world = make_custom_scenario()
-
-    print("=" * 55)
-    print("  Wildfire Evacuation — Dijkstra Search")
-    print("=" * 55)
-    print(f"  Grid       : {world.rows}x{world.cols}")
-    print(f"  Agent at   : {world.agent_pos}")
-    print(f"  Exits at   : {world.exit_cells}")
-    print(f"  Fire cells : {sorted(world.fire_cells)}")
-    print("=" * 55)
-
-    path, nodes_expanded, total_cost = dijkstra_search(world)
-
-    if path:
-        print(f"\n  Path length    : {len(path)} cells")
-        print(f"  Total cost     : {total_cost}")
-        print(f"  Nodes expanded : {nodes_expanded}")
-        world.render(path=path, title="Dijkstra — Shortest Distance Path (no fire penalty)")
-    else:
-        print("\n  No path found.")

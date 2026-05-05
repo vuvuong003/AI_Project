@@ -1,15 +1,3 @@
-"""
-scenario.py — Custom Wildfire Evacuation Map
-=============================================
-Recreates the hand-drawn 20x20 map exactly.
-Run this file directly to visualize the map.
-
-  W = wall (BLOCKED)
-  🤖 = agent start
-  🔥 = fire
-  🚪 = exit
-"""
-
 import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -17,10 +5,6 @@ sys.path.insert(0, os.path.dirname(__file__))
 from fire_environment import GridWorld, ROAD, FIRE, EXIT, BLOCKED
 
 def make_custom_scenario():
-    """
-    Build the exact map from the hand-drawn design.
-    Grid is 20 columns x 20 rows (0-indexed).
-    """
     world = GridWorld(rows=20, cols=20, fire_spread_prob=0.1)
 
     # ── WALLS (W) ─────────────────────────────────────────────────────────────

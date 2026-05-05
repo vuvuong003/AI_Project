@@ -1,7 +1,9 @@
 import time
 import statistics
 
-from scenario import make_custom_scenario
+from grids.small_grid import make_custom_scenario as make_small_scenario
+from grids.medium_grid import make_custom_scenario as make_medium_scenario
+from grids.large_grid import make_custom_scenario as make_large_scenario
 from search_algorithms.a_star import a_star_search
 from search_algorithms.dstar_lite import d_star_lite_search
 from search_algorithms.fire_evacuation_dijkstra import dijkstra_search
@@ -66,7 +68,7 @@ def simulate_agent(world, search_fn, max_steps=500):
     return world.agent_is_safe(), total_nodes, total_time, replans, travel_cost
 
 
-def benchmark_search_method(name, search_fn, trials=100, fire_spread_prob=0.1):
+def benchmark_search_method(name, search_fn, scenario_fn=make_small_scenario, trials=100, fire_spread_prob=0.1):
     dynamic_successes = 0
     dynamic_nodes = []
     dynamic_times = []
@@ -74,7 +76,7 @@ def benchmark_search_method(name, search_fn, trials=100, fire_spread_prob=0.1):
     dynamic_travel_costs = []
 
     for _ in range(trials):
-        world = make_custom_scenario()
+        world = scenario_fn()
         world.fire_spread_prob = fire_spread_prob
         success, nodes_dyn, time_dyn, replans, travel_cost = simulate_agent(world, search_fn)
         if success:
@@ -128,5 +130,85 @@ def main():
     print_summary(results)
 
 
+def benchmark_scenarios():
+    """Benchmark different scenarios with the same search algorithm"""
+    trials = 50  # Fewer trials for scenario comparison
+    fire_spread_prob = 0.1
+
+    scenarios = [
+        ("Small (10x10)", make_small_scenario),
+        ("Medium (20x20)", make_medium_scenario),
+        ("Large (30x30)", make_large_scenario),
+    ]
+
+    search_fn = a_star_search  # Use A* for comparison
+
+    print("Comparing scenarios with A* search...")
+    print(f"Fire spread probability: {fire_spread_prob}\n")
+
+    for scenario_name, scenario_fn, trials in scenarios:
+        print(f"\n--- {scenario_name} ---")
+        result = benchmark_search_method(
+            f"A* on {scenario_name}",
+            search_fn,
+            scenario_fn=scenario_fn,
+            trials=trials,
+            fire_spread_prob=fire_spread_prob
+        )
+
+        print(f"  Success rate: {result['dynamic_success_rate']:.2%}")
+        print(f"  Avg nodes: {result['dynamic_avg_total_nodes']:.1f}")
+        print(f"  Avg time: {result['dynamic_avg_total_time']:.6f} sec")
+        print(f"  Avg replans: {result['dynamic_avg_replans']:.2f}")
+
+
+def benchmark_all_algorithms_and_scenarios():
+    """Comprehensive benchmark showing detailed results for each grid size"""
+    fire_spread_prob = 0.1
+
+    algorithms = [
+        ("Dijkstra", dijkstra_search),
+        ("A*", a_star_search),
+        ("D* Lite", d_star_lite_search),
+    ]
+
+    scenarios = [
+        ("10x10 Grid", make_small_scenario, 100),  # More trials for small grids
+        ("20x20 Grid", make_medium_scenario, 50),   # Medium trials for medium grids
+        ("50x50 Grid", make_large_scenario, 20),    # Fewer trials for large grids
+    ]
+
+    print("Comprehensive Algorithm Benchmark Results")
+    print("=" * 80)
+    print(f"Fire spread probability: {fire_spread_prob}")
+    print("Trials adjusted by grid size for reasonable runtime")
+    print()
+
+    for scenario_name, scenario_fn, trials in scenarios:
+        print(f"\n{scenario_name.upper()}")
+        print("=" * len(scenario_name))
+        print(f"Running {trials} trials per algorithm...")
+
+        for algo_name, algo_fn in algorithms:
+            result = benchmark_search_method(
+                f"{algo_name} on {scenario_name}",
+                algo_fn,
+                scenario_fn=scenario_fn,
+                trials=trials,
+                fire_spread_prob=fire_spread_prob
+            )
+
+            print(f"\n{algo_name}")
+            print(f"  Trials                       : {result['trials']}")
+            print(f"  Dynamic success rate         : {result['dynamic_success_rate']:.2%}")
+            print(f"  Dynamic avg total nodes      : {result['dynamic_avg_total_nodes']:.1f}")
+            print(f"  Dynamic avg total time       : {result['dynamic_avg_total_time']:.6f} sec")
+            print(f"  Dynamic avg replans          : {result['dynamic_avg_replans']:.2f}")
+            print(f"  Dynamic avg time per replan  : {result['dynamic_avg_replan_time']:.6f} sec")
+            print(f"  Dynamic avg travel cost      : {result['dynamic_avg_travel_cost']:.3f}")
+
+        print("\n" + "-" * 80)
+
+
 if __name__ == "__main__":
-    main()
+    benchmark_all_algorithms_and_scenarios()

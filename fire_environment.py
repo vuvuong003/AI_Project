@@ -350,7 +350,7 @@ class GridWorld:
         return 0.0
 
 if __name__ == "__main__":
-    from scenario import make_custom_scenario
+    from grids.large_grid import make_custom_scenario
     from search_algorithms.a_star import a_star_search
     from search_algorithms.dstar_lite import d_star_lite_search
     from search_algorithms.fire_evacuation_dijkstra import dijkstra_search
@@ -373,13 +373,13 @@ if __name__ == "__main__":
 
     world_k = make_custom_scenario()
     world_k.render(path=path_dijkstra, title="Dijkstra Plan")
-    world_k.simulate_path(path_dijkstra, search_fn=dijkstra_search, delay=0.4, algorithm_name="Dijkstra")
+    world_k.simulate_path(path_dijkstra, search_fn=dijkstra_search, delay=0.1, algorithm_name="Dijkstra")
 
     world_a = make_custom_scenario()
     world_a.render(path=path_a_star, title="A* Plan")
-    world_a.simulate_path(path_a_star, search_fn=a_star_search, delay=0.4, algorithm_name="A*")
+    world_a.simulate_path(path_a_star, search_fn=a_star_search, delay=0.1, algorithm_name="A*")
 
     world_d = make_custom_scenario()
     world_d.render(path=path_d_star, title="D* Lite Plan")
-    world_d.simulate_path(path_d_star, search_fn=d_star_lite_search, delay=0.4, algorithm_name="D* Lite")
+    world_d.simulate_path(path_d_star, search_fn=d_star_lite_search, delay=0.1, algorithm_name="D* Lite")
 
